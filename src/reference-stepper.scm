@@ -1,9 +1,11 @@
+(import (utils print))
+(import (utils functions))
+
 (import (language assert))
 (import (language infix))
 (import (language define-object))
 (import (language define-type))
 (import (language match))
-(import (utils functions))
 (import (language examples))
 
 ;; This is a reference stepper module, from which
@@ -14,9 +16,16 @@
 
 (define (self-evaluating? x)
   (or (and-let* ((`(lambda ,args ,body) x)))
+      (and-let* ((`(quote ,e) x))) ;; !!!
       (and (isnt x list?)
 	   (isnt x pair?)
 	   (isnt x symbol?))))
+
+(e.g. (self-evaluating? 5))
+(e.g. (self-evaluating? '5))
+(e.g. (self-evaluating? ''(+ 2 3)))
+(e.g. (not (self-evaluating? '(+ 2 3))))
+
 
 (define-object (EvaluationContext)
   ;;(define macro-definitions ::)
@@ -97,6 +106,19 @@
      (if (null? a)
 	 b
 	 (cons (car a) (append (cdr a) b)))))
+
+(default-context:define! 'reverse
+  '(lambda (a)
+     (if (null? a)
+         a
+         (append (reverse (cdr a)) (cons (car a) '())))))
+
+(default-context:define! 'rev-tail
+  '(lambda (a b)
+     (if (null? a)
+         b
+         (rev-tail (cdr a) (cons (car a) b)))))
+
 
 (define (reduce expression #!optional (context::EvaluationContext
 				       default-context))
@@ -312,3 +334,322 @@
  (cons 1 '(2 3 4 5))
 
  '(1 2 3 4 5)))
+
+
+(e.g. (fix-list reduce '(reverse '(future has-no stepper)))
+      ===>
+      ((reverse '(future has-no stepper))
+
+       (if (null? '(future has-no stepper))
+           '(future has-no stepper)
+           (append (reverse (cdr '(future has-no stepper)))
+                   (cons (car '(future has-no stepper)) '())))
+
+       (if #f
+           '(future has-no stepper)
+           (append (reverse (cdr '(future has-no stepper)))
+                   (cons (car '(future has-no stepper)) '())))
+
+       (append (reverse (cdr '(future has-no stepper)))
+               (cons (car '(future has-no stepper)) '()))
+
+       (append (reverse '(has-no stepper))
+               (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (if (null? '(has-no stepper))
+            '(has-no stepper)
+            (append (reverse (cdr '(has-no stepper)))
+                    (cons (car '(has-no stepper)) '())))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (if #f
+            '(has-no stepper)
+            (append (reverse (cdr '(has-no stepper)))
+                    (cons (car '(has-no stepper)) '())))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (append (reverse (cdr '(has-no stepper)))
+                (cons (car '(has-no stepper)) '()))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (append (reverse '(stepper)) (cons (car '(has-no stepper)) '()))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (append
+         (if (null? '(stepper))
+             '(stepper)
+             (append (reverse (cdr '(stepper)))
+                     (cons (car '(stepper)) '())))
+         (cons (car '(has-no stepper)) '()))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (append
+         (if #f
+             '(stepper)
+             (append (reverse (cdr '(stepper)))
+                     (cons (car '(stepper)) '())))
+         (cons (car '(has-no stepper)) '()))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (append
+         (append (reverse (cdr '(stepper))) (cons (car '(stepper)) '()))
+         (cons (car '(has-no stepper)) '()))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (append
+         (append (reverse '()) (cons (car '(stepper)) '()))
+         (cons (car '(has-no stepper)) '()))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (append
+         (append
+          (if (null? '())
+              '()
+              (append (reverse (cdr '())) (cons (car '()) '())))
+          (cons (car '(stepper)) '()))
+         (cons (car '(has-no stepper)) '()))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (append
+         (append
+          (if #t
+              '()
+              (append (reverse (cdr '())) (cons (car '()) '())))
+          (cons (car '(stepper)) '()))
+         (cons (car '(has-no stepper)) '()))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (append
+         (append '() (cons (car '(stepper)) '()))
+         (cons (car '(has-no stepper)) '()))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (append (append '() (cons 'stepper '()))
+                (cons (car '(has-no stepper)) '()))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (append (append '() '(stepper))
+                (cons (car '(has-no stepper)) '()))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (append
+         (if (null? '())
+             '(stepper)
+             (cons (car '()) (append (cdr '()) '(stepper))))
+         (cons (car '(has-no stepper)) '()))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (append
+         (if #t
+             '(stepper)
+             (cons (car '()) (append (cdr '()) '(stepper))))
+         (cons (car '(has-no stepper)) '()))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (append '(stepper) (cons (car '(has-no stepper)) '()))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (append '(stepper) (cons 'has-no '()))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (append '(stepper) '(has-no))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (if (null? '(stepper))
+            '(has-no)
+            (cons (car '(stepper))
+                  (append (cdr '(stepper)) '(has-no))))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (if #f
+            '(has-no)
+            (cons (car '(stepper))
+                  (append (cdr '(stepper)) '(has-no))))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (cons (car '(stepper)) (append (cdr '(stepper)) '(has-no)))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (cons 'stepper (append (cdr '(stepper)) '(has-no)))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (cons 'stepper (append '() '(has-no)))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (cons 'stepper
+              (if (null? '())
+                  '(has-no)
+                  (cons (car '())
+                        (append (cdr '()) '(has-no)))))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append
+        (cons 'stepper
+              (if #t
+                  '(has-no)
+                  (cons (car '())
+                        (append (cdr '()) '(has-no)))))
+        (cons (car '(future has-no stepper)) '()))
+
+       (append (cons 'stepper '(has-no))
+               (cons (car '(future has-no stepper)) '()))
+
+       (append '(stepper has-no)
+               (cons (car '(future has-no stepper)) '()))
+
+       (append '(stepper has-no) (cons 'future '()))
+
+       (append '(stepper has-no) '(future))
+
+       (if (null? '(stepper has-no))
+           '(future)
+           (cons (car '(stepper has-no))
+                 (append (cdr '(stepper has-no)) '(future))))
+
+       (if #f
+           '(future)
+           (cons (car '(stepper has-no))
+                 (append (cdr '(stepper has-no)) '(future))))
+
+       (cons (car '(stepper has-no))
+             (append (cdr '(stepper has-no)) '(future)))
+
+       (cons 'stepper (append (cdr '(stepper has-no)) '(future)))
+
+       (cons 'stepper (append '(has-no) '(future)))
+
+       (cons 'stepper
+             (if (null? '(has-no))
+                 '(future)
+                 (cons (car '(has-no))
+                       (append (cdr '(has-no)) '(future)))))
+
+       (cons 'stepper
+             (if #f
+                 '(future)
+                 (cons (car '(has-no))
+                       (append (cdr '(has-no)) '(future)))))
+
+       (cons 'stepper (cons (car '(has-no))
+                            (append (cdr '(has-no)) '(future))))
+
+       (cons 'stepper (cons 'has-no (append (cdr '(has-no)) '(future))))
+
+       (cons 'stepper (cons 'has-no (append '() '(future))))
+
+       (cons 'stepper
+             (cons 'has-no
+                   (if (null? '())
+                       '(future)
+                       (cons (car '())
+                             (append (cdr '()) '(future))))))
+
+       (cons 'stepper
+             (cons 'has-no
+                   (if #t
+                       '(future)
+                       (cons (car '())
+                             (append (cdr '()) '(future))))))
+
+       (cons 'stepper (cons 'has-no '(future)))
+
+       (cons 'stepper '(has-no future))
+
+       '(stepper has-no future) ))
+
+
+(e.g. (fix-list reduce '(rev-tail '(future has-no stepper) '()))
+ ===>
+ ((rev-tail '(future has-no stepper) '())
+
+  (if (null? '(future has-no stepper))
+      '()
+      (rev-tail (cdr '(future has-no stepper))
+                (cons (car '(future has-no stepper)) '())))
+
+  (if #f
+      '()
+      (rev-tail (cdr '(future has-no stepper))
+                (cons (car '(future has-no stepper)) '())))
+
+  (rev-tail (cdr '(future has-no stepper))
+            (cons (car '(future has-no stepper)) '()))
+
+  (rev-tail '(has-no stepper)
+            (cons (car '(future has-no stepper)) '()))
+
+  (rev-tail '(has-no stepper) (cons 'future '()))
+  
+  (rev-tail '(has-no stepper) '(future))
+
+  (if (null? '(has-no stepper))
+      '(future)
+      (rev-tail (cdr '(has-no stepper))
+                (cons (car '(has-no stepper)) '(future))))
+  (if #f
+      '(future)
+      (rev-tail (cdr '(has-no stepper))
+                (cons (car '(has-no stepper)) '(future))))
+
+  (rev-tail (cdr '(has-no stepper))
+            (cons (car '(has-no stepper)) '(future)))
+
+  (rev-tail '(stepper)
+            (cons (car '(has-no stepper)) '(future)))
+
+  (rev-tail '(stepper) (cons 'has-no '(future)))
+
+  (rev-tail '(stepper) '(has-no future))
+
+  (if (null? '(stepper))
+      '(has-no future)
+      (rev-tail (cdr '(stepper))
+                (cons (car '(stepper)) '(has-no future))))
+
+  (if #f
+      '(has-no future)
+      (rev-tail (cdr '(stepper))
+                (cons (car '(stepper)) '(has-no future))))
+
+  (rev-tail (cdr '(stepper))
+            (cons (car '(stepper)) '(has-no future)))
+
+  (rev-tail '() (cons (car '(stepper)) '(has-no future)))
+
+  (rev-tail '() (cons 'stepper '(has-no future)))
+
+  (rev-tail '() '(stepper has-no future))
+
+  (if (null? '())
+      '(stepper has-no future)
+      (rev-tail (cdr '()) (cons (car '()) '(stepper has-no future))))
+
+  (if #t
+      '(stepper has-no future)
+      (rev-tail (cdr '()) (cons (car '()) '(stepper has-no future))))
+
+  '(stepper has-no future)))
